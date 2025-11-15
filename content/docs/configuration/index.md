@@ -673,7 +673,7 @@ You can also set this via the UI **Settings** page.
 Set JVM options with `JAVA_OPTS`:
 
 ```shell
-export JAVA_OPTS="-user.timezone=Europe/Paris"
+export JAVA_OPTS="-Duser.timezone=Europe/Paris"
 ```
 
 Proxy example (see [Java docs](http://download.oracle.com/javase/6/docs/technotes/guides/net/proxies.html)):
@@ -1653,11 +1653,29 @@ kestra:
       base-path: /tmp/kestra/storage/
 ```
 
-Other backends:
+:::alert{type="warning"}
+**Important**: Local storage behavior differs significantly between standalone and distributed deployments.
+:::
+
+**Standalone deployments:**
+- ✅ **Local storage with persistent volumes is OK** for standalone Kestra deployments
+- ✅ Suitable for single-node installations and development environments
+
+**Distributed deployments:**
+- ❌ **Local storage with ReadWriteOnce persistent volumes is NOT recommended** for distributed services
+- ✅ **Local storage with ReadWriteMany persistent volumes is OK** for distributed services
+- ❌ **Host storage sharing is NOT recommended** — this is difficult to achieve reliably
+
+**When ReadWriteMany is not available:**
+Since ReadWriteMany persistent volumes are rarely available in modern Kubernetes clusters, consider these alternatives:
+- **Cloud storage services**: S3, GCS, Azure Blob Storage
+- **Distributed object storage**: MinIO, Ceph, SeaweedFS, Garage, or similar solutions
+
+Other storage backends are supported via plugins:
 - [S3](#s3)
 - [GCS](#gcs)
-- [MinIO](#minio)
 - [Azure](#azure)
+- [MinIO](#minio)
 
 Isolate storage to specific services (>= 0.22):
 
@@ -2083,3 +2101,15 @@ Optional parameters:
 - `base-url`
 
 **Enterprise Edition** supports multiple providers (Bedrock, Anthropic, Azure OpenAI, DeepSeek, Gemini, Vertex AI, Mistral, OpenAI, and Ollama). See [AI Copilot](../ai-tools/ai-copilot.md#enterprise-edition-copilot-configurations).
+
+## Air-gapped Kestra Instance (EE)
+
+To keep your Kestra Instance offline, you can use the following in your Kestra configuration to alter blueprint management and remove UI components that rely on external APIs. The UI adapts fully: blueprints fetch from the Kestra API, YouTube embeds hide without internet, fonts fall back to local versions, and internet-dependent sidebar features hide automatically. Kestra runs smoothly in completely isolated environments.
+
+```yaml
+kestra:
+  ee:
+    airgapped: true
+```
+
+For Enterprise users, check out the [Custom Links configuration](#add-custom-links-to-kestra-ui-ee) to add your own documentation and resources to the Kestra UI sidebar if needed.
